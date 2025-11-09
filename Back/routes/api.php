@@ -1,0 +1,78 @@
+<?php
+
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\AdminProductController;
+use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\OrderItemController;
+use Illuminate\Support\Facades\Route;
+
+// Public routes
+Route::post('/register', [UserController::class, 'register']);
+Route::post('/login', [UserController::class, 'login']);
+
+// Public product and category routes
+Route::get('/products', [ProductController::class, 'index']);
+Route::get('/products/{id}', [ProductController::class, 'show']);
+Route::get('/products/category/{id}', [ProductController::class, 'sortByCategory']);
+Route::get('/categories', [CategoryController::class, 'index']);
+Route::get('/categories/{id}', [CategoryController::class, 'show']);
+
+// Protected routes (changed from auth:api to auth:sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    // User routes
+    Route::post('/logout', [UserController::class, 'logout']);
+    Route::get('/profile', [UserController::class, 'profile']);
+    Route::put('/profile', [UserController::class, 'update']);
+
+    // Admin user management routes
+    Route::get('/users', [UserController::class, 'index'])->middleware('admin');
+    Route::get('/users/{id}', [UserController::class, 'show'])->middleware('admin');
+    Route::put('/users/{id}', [UserController::class, 'update'])->middleware('admin');
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->middleware('admin');
+
+    // Cart routes
+    Route::get('/cart', [CartController::class, 'index']);
+    Route::post('/cart', [CartController::class, 'addItem']);
+    Route::put('/cart/items/{itemId}', [CartController::class, 'updateItem']);
+    Route::delete('/cart/items/{itemId}', [CartController::class, 'removeItem']);
+    Route::delete('/cart', [CartController::class, 'clear']);
+
+    // Order routes
+    Route::get('/orders', [OrderController::class, 'index']);
+    Route::get('/orders/{id}', [OrderController::class, 'show']);
+    Route::post('/orders', [OrderController::class, 'store']);
+    Route::put('/orders/{id}', [OrderController::class, 'update']);
+
+    //Order items routes
+    Route::put('/item/{id}', [OrderItemController::class, 'update']);
+
+    // Admin routes
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::middleware('admin')->prefix('admin')->group(function () {  // Changed from 'role:admin'
+            Route::get('/products', [AdminProductController::class, 'index']);
+            Route::post('/products', [AdminProductController::class, 'store']);
+            Route::post('/products/image/{id}', [AdminProductController::class, 'imageDisplay']);
+            Route::put('/products/{id}', [AdminProductController::class, 'update']);
+            Route::delete('/products/{id}', [AdminProductController::class, 'destroy']);
+
+        });
+
+        Route::get('/admin/orders', [AdminOrderController::class, 'index']);
+        Route::get('/admin/orders/{id}', [AdminOrderController::class, 'show']);
+        Route::put('/admin/orders/{id}', [AdminOrderController::class, 'update']);
+        Route::delete('/admin/orders/{id}', [AdminOrderController::class, 'destroy']);
+
+    });
+
+    // Admin category management routes
+    Route::middleware('role:admin')->group(function () {
+        Route::post('/categories', [CategoryController::class, 'store']);
+        Route::put('/categories/{id}', [CategoryController::class, 'update']);
+        Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+    });
+});
